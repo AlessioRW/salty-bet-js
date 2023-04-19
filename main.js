@@ -59,7 +59,7 @@ async function getOdds(fighter, enemy){
 
 async function calculateWager(redOdds,blueOdds){
     let balance = await driver.findElement(By.id('balance')).getText()
-    console.log(`Balance: ${balance}`)
+    console.log(`Balance: $${balance}`)
     balance = (balance.split(',')).join('')
     const wager = Math.round((balance/10))
     return wager
