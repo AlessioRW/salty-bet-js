@@ -88,15 +88,18 @@ async function main() {
 
     if (driver === 0) {
         loadingDriver = true
-        // driver = await new Builder().forBrowser(Browser.FIREFOX).setFirefoxOptions(new firefox.Options().headless()).build();
-        driver = await new Builder().forBrowser(Browser.FIREFOX).setFirefoxOptions(new firefox.Options()).build();
+        driver = await new Builder().forBrowser(Browser.FIREFOX).setFirefoxOptions(new firefox.Options().headless()).build();
+        //driver = await new Builder().forBrowser(Browser.FIREFOX).setFirefoxOptions(new firefox.Options()).build();
         await driver.get('https://www.saltybet.com/');
+        console.log('Driver Loaded')
         if (betting){
             await driver.findElement(By.className('nav-text')).click()
             await driver.findElement(By.id('email')).sendKeys(email)
             await driver.findElement(By.id('pword')).sendKeys(password)
             await driver.findElement(By.className('graybutton')).click()
+            console.log('Logged In')
         }
+        
         loadingDriver = false
     } 
     
