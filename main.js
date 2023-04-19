@@ -1,0 +1,167 @@
+const Fight = require('./db/fights.model')
+const { Builder, Browser, By, Key, until } = require('selenium-webdriver');
+const firefox = require('selenium-webdriver/firefox');
+const {email, password} = require('./credentials.json');
+
+
+
+function isNumber(value) {
+    if (typeof value === "string") {
+        return !isNaN(value);
+    }
+}
+
+
+async function getOdds(fighter, enemy){
+    const winAdd = 1 // +/- odds for winning/losing
+    const matchUpWin = 5 // adding odds for winning same matchup
+    const timeMultiplier = 1/1000000 // +/- multiplier odds for average time
+
+    const wins = await Fight.findAll({
+        where:{
+            winner: fighter
+        }
+    })
+    const losses = await Fight.findAll({
+        where:{
+            loser: fighter
+        }
+    })
+    const sameMatchUp = await Fight.findAll({
+        where: {
+            winner: fighter,
+            loser: enemy
+        }
+    })
+
+    let averageTime = 0
+    for (let match of wins){
+        averageTime += match.time
+    }
+    for (let match of losses){
+        averageTime -= match.time
+    }
+
+    if (averageTime !== 0){
+        averageTime /= (wins.length + losses.length)
+    }
+   
+
+
+    let odds = 0
+    odds += (wins.length)*winAdd
+    odds -= (losses.length)*winAdd
+    odds += (sameMatchUp.length)*matchUpWin
+    odds += (averageTime)*timeMultiplier
+
+    return odds
+}
+
+async function calculateWager(redOdds,blueOdds){
+    let balance = await driver.findElement(By.id('balance')).getText()
+    balance = (balance.split(',')).join('')
+    const wager = Math.round((balance/10))
+    return wager
+}
+
+async function bet(){
+    const redOdds = await getOdds(currentFighters.red, currentFighters.blue)
+    const blueOdds = await getOdds(currentFighters.blue, currentFighters.red)
+    const wagerAmount = await calculateWager(redOdds,blueOdds)
+    await driver.findElement(By.id('wager')).sendKeys(wagerAmount)
+    
+    if (redOdds >= blueOdds){
+        await driver.findElement(By.id('player1')).click()
+        console.log(`Placed $${wagerAmount} on ${currentFighters.red}`)
+    } else {
+        await driver.findElement(By.id('player2')).click()
+        console.log(`Placed $${wagerAmount} on ${currentFighters.blue}`)
+    }
+}
+
+
+async function main() {
+    if (loadingDriver){
+        return
+    }
+
+    if (driver === 0) {
+        loadingDriver = true
+        // driver = await new Builder().forBrowser(Browser.FIREFOX).setFirefoxOptions(new firefox.Options().headless()).build();
+        driver = await new Builder().forBrowser(Browser.FIREFOX).setFirefoxOptions(new firefox.Options()).build();
+        await driver.get('https://www.saltybet.com/');
+        if (betting){
+            await driver.findElement(By.className('nav-text')).click()
+            await driver.findElement(By.id('email')).sendKeys(email)
+            await driver.findElement(By.id('pword')).sendKeys(password)
+            await driver.findElement(By.className('graybutton')).click()
+        }
+        loadingDriver = false
+    } 
+    
+    else {
+        try {
+            if (check === true){
+                return
+            }
+            check = true
+            let status = await driver.findElement(By.id('betstatus')).getText()
+            if (mode === 'waiting') { //look for fighters to be revealed and fight to start
+                if (status === 'Bets are OPEN!') {
+                    startTime = Date.now()
+                    const blueNameRaw = await driver.findElement(By.className('bluetext')).getText()
+                    const redNameRaw = await driver.findElement(By.className('redtext')).getText()
+                    const blueName = isNumber(blueNameRaw.split('|')[0]) ? blueNameRaw.split('|')[1] : blueNameRaw.split('|')[0]
+                    const redName = isNumber(redNameRaw.split('|')[0]) ? redNameRaw.split('|')[1] : redNameRaw.split('|')[0]
+    
+                    currentFighters.blue = blueName
+                    currentFighters.red = redName
+
+                    console.clear()
+                    console.log(`Current Fight: ${currentFighters.red} vs ${currentFighters.blue}`)
+
+                    if (betting){
+                        bet()
+                    }
+                    mode = 'watching'
+                }
+            } else if (mode === 'watching'){
+                if (status.toLowerCase().includes('payout')){ //fight is over
+                    const fightTime = Date.now() - startTime
+                     mode = 'waiting'
+    
+                    if (status.toLowerCase().includes('blue')){ //blue wins
+                        await Fight.create({
+                            winner: currentFighters.blue,
+                            loser: currentFighters.red,
+                            time: fightTime
+                        })
+                    } else if (status.toLowerCase().includes('red')){ //red wins
+                        await Fight.create({
+                            winner: currentFighters.red,
+                            loser: currentFighters.blue,
+                            time: fightTime
+                        })
+                    }
+                }
+                
+            }
+            check = false
+        } catch (error) {
+            console.log(error)
+            await driver.quit();
+        }
+    }
+
+    
+}
+
+let check = false
+let betting = true
+let startTime
+let driver = 0
+let loadingDriver = false
+let mode = 'waiting' //waiting, watching
+currentFighters = { 'blue': null, 'red': null }
+
+setInterval(main, 1000)

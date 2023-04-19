@@ -1,5 +1,5 @@
 const db = require('./db');
-const Character = require('./char.model');
+const Fight = require('./fights.model');
 
 
 (async function(){
@@ -7,7 +7,7 @@ const Character = require('./char.model');
         force: true
     })
 
-    await Character.sync({
+    await Fight.sync({
         force: true
     })
 })()
