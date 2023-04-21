@@ -2,6 +2,7 @@ const Fight = require('./db/fights.model')
 const { Builder, Browser, By, Key, until } = require('selenium-webdriver');
 const firefox = require('selenium-webdriver/firefox');
 const {email, password} = require('./credentials.json');
+const Balance = require('./db/balance.model');
 
 
 
@@ -15,7 +16,7 @@ function isNumber(value) {
 async function getOdds(fighter, enemy){
     const winAdd = 1 // +/- odds for winning/losing
     const matchUpWin = 5 // adding odds for winning same matchup
-    const timeMultiplier = 1/1000000 // +/- multiplier odds for average time
+    const timeMultiplier = 1/100000 // +/- multiplier odds for average time
 
     const wins = await Fight.findAll({
         where:{
@@ -42,9 +43,6 @@ async function getOdds(fighter, enemy){
         averageTime -= match.time
     }
 
-    if (averageTime !== 0){
-        averageTime /= (wins.length + losses.length)
-    }
    
 
 
@@ -61,6 +59,10 @@ async function calculateWager(redOdds,blueOdds){
     let balance = await driver.findElement(By.id('balance')).getText()
     console.log(`Balance: $${balance}`)
     balance = (balance.split(',')).join('')
+    Balance.create({ //not awaiting like a bawse
+        balance: balance
+    })
+
     const wager = Math.round((balance/10))
     return wager
 }
