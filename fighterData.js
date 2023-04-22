@@ -34,4 +34,20 @@ async function allFighters(){
     console.log(fighters)
 }
 
-allFighters()
+async function fighterStats(fighter){
+
+    const wins = await Fight.findAll({
+        where:{
+            winner: fighter
+        }
+    })
+    const losses = await Fight.findAll({
+        where:{
+            loser: fighter
+        }
+    })
+    return {wins: wins.length, losses: losses.length}
+}
+
+
+module.exports = {fighterStats, allFighters, checkIfKeyExist}

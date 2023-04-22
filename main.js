@@ -3,6 +3,7 @@ const { Builder, Browser, By, Key, until } = require('selenium-webdriver');
 const firefox = require('selenium-webdriver/firefox');
 const {email, password} = require('./credentials.json');
 const Balance = require('./db/balance.model');
+const {fighterStats, allFighters, checkIfKeyExist} = require('./fighterData')
 
 
 
@@ -116,15 +117,18 @@ async function main() {
                 if (status === 'Bets are OPEN!') {
                     startTime = Date.now()
                     const blueNameRaw = await driver.findElement(By.className('bluetext')).getText()
-                    const redNameRaw = await driver.findElement(By.className('redtext')).getText()
                     const blueName = isNumber(blueNameRaw.split('|')[0]) ? blueNameRaw.split('|')[1] : blueNameRaw.split('|')[0]
+                    const redNameRaw = await driver.findElement(By.className('redtext')).getText()
                     const redName = isNumber(redNameRaw.split('|')[0]) ? redNameRaw.split('|')[1] : redNameRaw.split('|')[0]
     
                     currentFighters.blue = blueName
                     currentFighters.red = redName
 
+                    const blueStats = await fighterStats(blueName)
+                    const redStats = await fighterStats(redName)
+
                     console.clear()
-                    console.log(`Current Fight: ${currentFighters.red} vs ${currentFighters.blue}`)
+                    console.log(`Current Fight: ${currentFighters.red} [${redStats.wins}|${redStats.losses}] vs ${currentFighters.blue} [${blueStats.wins}|${blueStats.losses}]`)
 
                     if (betting){
                         bet()
