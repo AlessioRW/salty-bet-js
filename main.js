@@ -64,7 +64,7 @@ async function calculateWager(redOdds,blueOdds){
         balance: balance
     })
 
-    const wager = Math.round((balance/10))
+    const wager = Math.round(((balance % 5000)/10)) //if balance is over 5000, bet using money over that amount
     return wager
 }
 

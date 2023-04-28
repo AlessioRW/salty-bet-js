@@ -49,5 +49,4 @@ async function fighterStats(fighter){
     return {wins: wins.length, losses: losses.length}
 }
 
-
 module.exports = {fighterStats, allFighters, checkIfKeyExist}
