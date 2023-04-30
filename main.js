@@ -64,7 +64,13 @@ async function calculateWager(redOdds,blueOdds){
         balance: balance
     })
 
-    const wager = Math.round(((balance % 5000)/10)) //if balance is over 5000, bet using money over that amount
+    let wager
+    let tournamentText = await driver.findElements(By.id('tournament-note'))
+    if (tournamentText.length !== 0){ //if betting during tournament, be more risky with money
+        wager = Math.round((balance/8))
+    } else {
+        wager = Math.round(((balance % 5000)/10)) //if balance is over 5000, bet using money over that amount
+    }
     return wager
 }
 
@@ -73,6 +79,13 @@ async function bet(){
     const blueOdds = await getOdds(currentFighters.blue, currentFighters.red)
     const wagerAmount = await calculateWager(redOdds,blueOdds)
     await driver.findElement(By.id('wager')).sendKeys(wagerAmount)
+    if (tournamentOnly){
+        console.log('Tournament Mode')
+        let tournamentText = await driver.findElements(By.id('tournament-note'))
+        if (tournamentText.length === 0){
+            return
+        }
+    }
     
     if (redOdds >= blueOdds){
         await driver.findElement(By.id('player1')).click()
@@ -101,6 +114,9 @@ async function main() {
             await driver.findElement(By.id('pword')).sendKeys(password)
             await driver.findElement(By.className('graybutton')).click()
             console.log('Logged In')
+            if (tournamentOnly){
+                console.log('Tournament Mode')
+            }
         }
         
         loadingDriver = false
@@ -168,6 +184,7 @@ async function main() {
 
 let check = false
 let betting = true
+let tournamentOnly = false //only bet during tournaments
 let startTime
 let driver = 0
 let loadingDriver = false
