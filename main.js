@@ -44,14 +44,34 @@ async function getOdds(fighter, enemy){
         averageTime -= match.time
     }
 
-   
+    //getting the number of wins/losses of the character each fighter has won/lost against
+    let enemyStrength = 0
+    let loserWins = []
+    for (let fight of wins){ //find number of wins opponets have who our fighter has beat
+        loserWins = await Fight.findAll({
+            where:{
+                winner: fight.loser
+            }
+        })
+    }
+    enemyStrength += loserWins.length
 
+    let winnerLosses = []
+    for (let fight of losses){ //find number of wins opponets have who our fighter has beat
+        winnerLosses = await Fight.findAll({
+            where:{
+                loser: fight.winner
+            }
+        })
+    }
+    enemyStrength -= winnerLosses.length
 
     let odds = 0
     odds += (wins.length)*winAdd
     odds -= (losses.length)*winAdd
     odds += (sameMatchUp.length)*matchUpWin
     odds += (averageTime)*timeMultiplier
+    odds += enemyStrength
 
     return odds
 }
@@ -67,7 +87,7 @@ async function calculateWager(redOdds,blueOdds){
     let wager
     let tournamentText = await driver.findElements(By.id('tournament-note'))
     if (tournamentText.length !== 0){ //if betting during tournament, be more risky with money
-        wager = Math.round((balance/8))
+        wager = Math.round((balance/2))
     } else {
         wager = Math.round(((balance % 5000)/10)) //if balance is over 5000, bet using money over that amount
     }
