@@ -3,8 +3,7 @@ const { Builder, Browser, By, Key, until } = require('selenium-webdriver');
 const firefox = require('selenium-webdriver/firefox');
 const {email, password} = require('./credentials.json');
 const Balance = require('./db/balance.model');
-const {fighterStats, allFighters, checkIfKeyExist} = require('./fighterData')
-
+const {fighterStats, allFighters, checkIfKeyExist} = require('./data')
 
 
 function isNumber(value) {

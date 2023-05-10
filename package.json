@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "chart.js": "^4.3.0",
     "selenium-webdriver": "^4.8.2",
     "sequelize": "^6.31.0",
     "sqlite3": "^5.1.6"
